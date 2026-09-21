@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Ceyline Holdings (Pvt) Ltd &mdash; Forest Admin Gate</title>
+  <title>Ceyline Holdings (Pvt) Ltd &mdash; Roots for the Future</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;1,500&family=Space+Grotesk:wght@500;600&family=Inter:wght@400;500;600&display=swap" />
   <link rel="stylesheet" href="style.css" />
@@ -13,19 +13,25 @@
   <canvas id="canopy-canvas"></canvas>
   <div class="scrim"></div>
 
-  <div class="theme-toggle" role="group" aria-label="Theme">
-    <button type="button" id="btn-light" aria-pressed="false" title="Light mode">&#9728;</button>
-    <button type="button" id="btn-dark" aria-pressed="false" title="Dark mode">&#9789;</button>
-    <button type="button" id="btn-system" aria-pressed="true" title="Match system">&#9881;</button>
+  <div class="controls">
+    <div class="pill-group" role="group" aria-label="Sound">
+      <button type="button" id="btn-sound" aria-pressed="false" title="Nature sounds">&#128266;</button>
+    </div>
+    <div class="pill-group" role="group" aria-label="Theme">
+      <button type="button" id="btn-light" aria-pressed="false" title="Light mode">&#9728;</button>
+      <button type="button" id="btn-dark" aria-pressed="false" title="Dark mode">&#9789;</button>
+      <button type="button" id="btn-system" aria-pressed="true" title="Match system">&#9881;</button>
+    </div>
   </div>
 
   <main>
-    <div class="eyebrow">Ceyline Holdings (Pvt) Ltd</div>
-    <h1>Entering the <em>Forest Admin</em> canopy</h1>
+    <div class="brand">
+      <div class="brand-name">Ceyline Holdings (Pvt) Ltd</div>
+      <div class="brand-tag">Roots for the Future</div>
+    </div>
 
     <div class="gate" id="gate">
       <button type="button" class="start-btn" id="start-btn">Click to begin</button>
-      <div class="gate-hint">Starts a 10-second countdown, then continues to sign-in.</div>
     </div>
 
     <div class="ring-wrap" id="ring-wrap" hidden>
@@ -37,7 +43,7 @@
       <div class="count" id="count">10</div>
     </div>
 
-    <div class="status" id="status" hidden></div>
+    <div class="visually-hidden" id="status" role="status" aria-live="polite"></div>
   </main>
 
   <script src="script.js"></script>

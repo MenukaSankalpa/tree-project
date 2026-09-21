@@ -1,5 +1,6 @@
-/* Ceyline Holdings (Pvt) Ltd — Forest Admin countdown gate
-   Palette + type tokens live on :root; dark mode redefines the same tokens. */
+/* Ceyline Holdings (Pvt) Ltd — "Roots for the Future"
+   Forest Admin countdown gate. Palette + type tokens live on :root;
+   dark mode redefines the same tokens. */
 
 :root{
   --bg: #F4F1E8;
@@ -10,7 +11,6 @@
   --ring-glow: rgba(74,124,89,0.28);
   --accent: #3E6B4A;
   --accent-2: #B98B4E;
-  --card-bg: rgba(255,255,255,0.55);
   --card-border: rgba(22,36,27,0.10);
   --sky-a: #F4F1E8;
   --sky-b: #E4E9D8;
@@ -29,7 +29,6 @@
     --ring-glow: rgba(126,181,132,0.38);
     --accent: #7EB584;
     --accent-2: #E0B36C;
-    --card-bg: rgba(20,32,22,0.55);
     --card-border: rgba(234,240,230,0.12);
     --sky-a: #0D1710;
     --sky-b: #07100A;
@@ -48,7 +47,6 @@
   --ring-glow: rgba(126,181,132,0.38);
   --accent: #7EB584;
   --accent-2: #E0B36C;
-  --card-bg: rgba(20,32,22,0.55);
   --card-border: rgba(234,240,230,0.12);
   --sky-a: #0D1710;
   --sky-b: #07100A;
@@ -85,11 +83,16 @@ body{
   pointer-events: none;
 }
 
-.theme-toggle{
+.controls{
   position: fixed;
   top: max(18px, env(safe-area-inset-top, 0px));
   right: 18px;
   z-index: 10;
+  display: flex;
+  gap: 8px;
+}
+
+.pill-group{
   display: flex;
   gap: 4px;
   padding: 4px;
@@ -98,7 +101,7 @@ body{
   border: 1px solid var(--card-border);
   backdrop-filter: blur(8px);
 }
-.theme-toggle button{
+.pill-group button{
   appearance: none;
   border: none;
   background: transparent;
@@ -113,11 +116,11 @@ body{
   justify-content: center;
   transition: background 0.2s ease;
 }
-.theme-toggle button[aria-pressed="true"]{
+.pill-group button[aria-pressed="true"]{
   background: var(--accent);
   color: var(--bg);
 }
-.theme-toggle button:focus-visible{
+.pill-group button:focus-visible{
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -132,19 +135,18 @@ main{
   justify-content: center;
   padding: 32px 16px;
   padding-block: 48px;
-  gap: 26px;
+  gap: 30px;
   text-align: center;
 }
 
-.eyebrow{
-  font-family: 'Fraunces', Georgia, serif;
-  font-style: italic;
-  font-size: clamp(14px, 2.4vw, 17px);
-  color: var(--ink-dim);
-  letter-spacing: 0.02em;
+.brand{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
-h1{
+.brand-name{
   font-family: 'Fraunces', Georgia, serif;
   font-weight: 600;
   font-size: clamp(26px, 5vw, 42px);
@@ -152,11 +154,16 @@ h1{
   margin: 0;
   text-wrap: balance;
   color: var(--ink);
-  max-width: 16ch;
+  max-width: 18ch;
 }
-h1 em{
+
+.brand-tag{
+  font-family: 'Fraunces', Georgia, serif;
   font-style: italic;
+  font-weight: 500;
+  font-size: clamp(15px, 2.6vw, 19px);
   color: var(--accent);
+  letter-spacing: 0.01em;
 }
 
 /* ---- Start gate (click-to-begin) ---- */
@@ -164,7 +171,7 @@ h1 em{
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 22px;
+  gap: 10px;
 }
 
 .start-btn{
@@ -188,11 +195,6 @@ h1 em{
 @keyframes breathe{
   0%, 100%{ box-shadow: 0 0 0 0 var(--ring-glow), var(--shadow); }
   50%{ box-shadow: 0 0 0 14px transparent, var(--shadow); }
-}
-
-.gate-hint{
-  font-size: 13px;
-  color: var(--ink-dim);
 }
 
 /* ---- Countdown ring ---- */
@@ -233,10 +235,12 @@ h1 em{
   100%{ transform: scale(1); }
 }
 
-.status{
-  font-size: 15px;
-  color: var(--ink-dim);
-  min-height: 1.4em;
+.visually-hidden{
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 [hidden]{ display: none !important; }

@@ -2,7 +2,7 @@
   "use strict";
   var DEST = "https://forestadmin.autohubmarket.com/login";
 
-  /* ---------------- Theme ---------------- */
+  /* ================= Theme ================= */
   var root = document.documentElement;
   var btnLight = document.getElementById("btn-light");
   var btnDark = document.getElementById("btn-dark");
@@ -31,7 +31,7 @@
   btnDark.addEventListener("click", function () { applyTheme("dark"); });
   btnSystem.addEventListener("click", function () { applyTheme("system"); });
 
-  /* ---------------- Animated forest + blinking trees/plants ---------------- */
+  /* ================= Animated forest: blinking trees + blinking fairy lights ================= */
   var canvas = document.getElementById("canopy-canvas");
   var ctx = canvas.getContext("2d");
   var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -56,7 +56,7 @@
   window.addEventListener("resize", resize);
   resize();
 
-  // Parallax fir silhouette layers (back to front)
+  // Faint static parallax backdrop (unlit, so the blinking foliage reads clearly against it)
   function buildLayer(count, baseY, heightRange, seedOffset) {
     var trees = [];
     for (var i = 0; i < count; i++) {
@@ -81,13 +81,18 @@
 
   function layerColor(depth) {
     var dark = isDark();
-    var palettes = dark ? ["#16281A", "#0F1D12", "#0A140C"] : ["#8FAE85", "#6E9A5E", "#3E6B4A"];
+    var palettes = dark ? ["#132419", "#0D1A10", "#08120A"] : ["#96B48C", "#799E67", "#456F4C"];
     return palettes[depth];
   }
 
-  function drawFir(x, baseY, h, w, color, alpha) {
+  function drawFir(x, baseY, h, w, color, alpha, glow) {
+    ctx.save();
     ctx.globalAlpha = alpha == null ? 1 : alpha;
     ctx.fillStyle = color;
+    if (glow) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = glow;
+    }
     var tiers = 3;
     for (var t = 0; t < tiers; t++) {
       var tierH = h * (0.42 - t * 0.06);
@@ -101,16 +106,18 @@
       ctx.fill();
     }
     ctx.fillRect(x - w * 0.045, baseY - h * 0.12, w * 0.09, h * 0.16);
-    ctx.globalAlpha = 1;
+    ctx.restore();
   }
 
   // Small plant / sprout silhouette (a few blades + a stem)
-  function drawSprout(x, y, size, color, alpha) {
+  function drawSprout(x, y, size, color, alpha, glow) {
+    ctx.save();
     ctx.globalAlpha = alpha == null ? 1 : alpha;
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
-    ctx.lineWidth = Math.max(1, size * 0.12);
+    ctx.lineWidth = Math.max(1, size * 0.14);
     ctx.lineCap = "round";
+    if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow; }
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.quadraticCurveTo(x - size * 0.5, y - size * 0.6, x - size * 0.15, y - size);
@@ -123,35 +130,75 @@
     ctx.moveTo(x, y);
     ctx.quadraticCurveTo(x, y - size * 0.5, x, y - size * 0.85);
     ctx.stroke();
-    ctx.globalAlpha = 1;
+    ctx.restore();
   }
 
-  // Random blinking foliage scattered across the whole canvas —
-  // a mix of tiny trees and small plants that fade in and out like fireflies.
+  // A tiny glowing point of light (firefly / fairy light)
+  function drawLight(x, y, size, color, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    var grad = ctx.createRadialGradient(x, y, 0, x, y, size * 4);
+    grad.addColorStop(0, color);
+    grad.addColorStop(0.35, color);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = Math.min(1, alpha * 1.4);
+    ctx.fillStyle = "#FFFDF2";
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Randomly placed, independently blinking trees + small plants — the whole
+  // canvas is their stage, not just the tree line.
   var blinkers = [];
   function makeBlinker() {
-    var kind = Math.random() < 0.5 ? "tree" : "sprout";
+    var kind = Math.random() < 0.55 ? "tree" : "sprout";
     return {
       kind: kind,
       x: Math.random() * W,
-      y: H * 0.15 + Math.random() * H * 0.8,
-      size: kind === "tree" ? 14 + Math.random() * 26 : 8 + Math.random() * 14,
+      y: H * 0.12 + Math.random() * H * 0.82,
+      size: kind === "tree" ? 16 + Math.random() * 30 : 9 + Math.random() * 15,
       phase: Math.random() * Math.PI * 2,
-      speed: 0.006 + Math.random() * 0.014,
+      speed: 0.008 + Math.random() * 0.022,
       colorIdx: Math.floor(Math.random() * 3),
     };
   }
-  function rebuildBlinkers() {
-    var count = Math.max(18, Math.round((W * H) / 42000));
-    blinkers = [];
-    for (var i = 0; i < count; i++) blinkers.push(makeBlinker());
+
+  // Randomly placed blinking fairy lights, scattered independently of the trees
+  var lights = [];
+  function makeLight() {
+    return {
+      x: Math.random() * W,
+      y: H * 0.1 + Math.random() * H * 0.85,
+      size: 1.4 + Math.random() * 2.2,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.02 + Math.random() * 0.05,
+      hold: Math.random() < 0.5, // some lights flicker fast, some hold longer
+      hue: Math.random() < 0.7 ? "#FFE9B8" : "#CFF3D8",
+    };
   }
-  rebuildBlinkers();
-  window.addEventListener("resize", rebuildBlinkers);
+
+  function rebuildScatter() {
+    var area = W * H;
+    var treeCount = Math.max(20, Math.round(area / 40000));
+    var lightCount = Math.max(26, Math.round(area / 26000));
+    blinkers = [];
+    for (var i = 0; i < treeCount; i++) blinkers.push(makeBlinker());
+    lights = [];
+    for (var j = 0; j < lightCount; j++) lights.push(makeLight());
+  }
+  rebuildScatter();
+  window.addEventListener("resize", rebuildScatter);
 
   function blinkerColor(idx) {
     var dark = isDark();
-    var palette = dark ? ["#2F5A3C", "#3E6B4A", "#7EB584"] : ["#4A7C59", "#6E9A5E", "#B98B4E"];
+    var palette = dark ? ["#3B7A4E", "#4F9660", "#8FD79A"] : ["#4A7C59", "#6E9A5E", "#2F5A3C"];
     return palette[idx];
   }
 
@@ -160,34 +207,251 @@
   function frame() {
     ctx.clearRect(0, 0, W, H);
 
-    // Parallax background firs
+    // faint static backdrop
     layers.forEach(function (layer, depth) {
       var color = layerColor(depth);
-      layer.trees.forEach(function (tr) {
-        drawFir(tr.x, layer.baseY, tr.h, tr.w, color);
-      });
+      layer.trees.forEach(function (tr) { drawFir(tr.x, layer.baseY, tr.h, tr.w, color, 0.9); });
     });
 
-    // Randomly blinking trees + small plants across the whole scene
+    // randomly blinking trees + plants, glowing as they brighten
     blinkers.forEach(function (b) {
       if (!reduceMotion) b.phase += b.speed;
-      var alpha = 0.15 + (Math.sin(b.phase) * 0.5 + 0.5) * 0.75;
+      var wave = Math.sin(b.phase) * 0.5 + 0.5;
+      var alpha = 0.08 + wave * 0.92;
       var color = blinkerColor(b.colorIdx);
-      if (b.kind === "tree") {
-        drawFir(b.x, b.y, b.size, b.size * 0.6, color, alpha);
-      } else {
-        drawSprout(b.x, b.y, b.size, color, alpha);
-      }
+      var glow = wave * 14;
+      if (b.kind === "tree") drawFir(b.x, b.y, b.size, b.size * 0.6, color, alpha, glow);
+      else drawSprout(b.x, b.y, b.size, color, alpha, glow);
+    });
+
+    // randomly blinking fairy lights
+    lights.forEach(function (l) {
+      if (!reduceMotion) l.phase += l.speed;
+      var wave = Math.sin(l.phase) * 0.5 + 0.5;
+      var alpha = l.hold ? 0.15 + wave * 0.55 : Math.pow(wave, 3);
+      drawLight(l.x, l.y, l.size, l.hue, alpha);
     });
 
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 
-  var mo = new MutationObserver(function () {});
-  mo.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+  /* ================= Sound engine: nature ambience + countdown ticks ================= */
+  var Sound = (function () {
+    var ctxAudio = null;
+    var master = null;
+    var running = false;
+    var enabled = false;
+    var birdTimer = null;
 
-  /* ---------------- Click-to-start countdown ---------------- */
+    function ensureContext() {
+      if (ctxAudio) return;
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ctxAudio = new AC();
+      master = ctxAudio.createGain();
+      master.gain.value = 0;
+      master.connect(ctxAudio.destination);
+    }
+
+    function makeNoiseBuffer() {
+      var len = ctxAudio.sampleRate * 4;
+      var buffer = ctxAudio.createBuffer(1, len, ctxAudio.sampleRate);
+      var data = buffer.getChannelData(0);
+      for (var i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      return buffer;
+    }
+
+    function startWind() {
+      var noise = ctxAudio.createBufferSource();
+      noise.buffer = makeNoiseBuffer();
+      noise.loop = true;
+
+      var bandpass = ctxAudio.createBiquadFilter();
+      bandpass.type = "bandpass";
+      bandpass.frequency.value = 700;
+      bandpass.Q.value = 0.6;
+
+      var lowpass = ctxAudio.createBiquadFilter();
+      lowpass.type = "lowpass";
+      lowpass.frequency.value = 1200;
+
+      var windGain = ctxAudio.createGain();
+      windGain.gain.value = 0.05;
+
+      noise.connect(bandpass);
+      bandpass.connect(lowpass);
+      lowpass.connect(windGain);
+      windGain.connect(master);
+      noise.start();
+
+      var lfo = ctxAudio.createOscillator();
+      lfo.frequency.value = 0.05;
+      var lfoGain = ctxAudio.createGain();
+      lfoGain.gain.value = 300;
+      lfo.connect(lfoGain);
+      lfoGain.connect(bandpass.frequency);
+      lfo.start();
+    }
+
+    function chirp() {
+      if (!enabled || !ctxAudio) return;
+      var now = ctxAudio.currentTime;
+      var baseFreq = 1800 + Math.random() * 1800;
+      var notes = 2 + Math.floor(Math.random() * 3);
+      var t = now;
+
+      var panner = (ctxAudio.createStereoPanner && ctxAudio.createStereoPanner()) || null;
+      var out = master;
+      if (panner) {
+        panner.pan.value = Math.random() * 2 - 1;
+        panner.connect(master);
+        out = panner;
+      }
+
+      var bp = ctxAudio.createBiquadFilter();
+      bp.type = "bandpass";
+      bp.frequency.value = baseFreq;
+      bp.Q.value = 6;
+      bp.connect(out);
+
+      for (var n = 0; n < notes; n++) {
+        var osc = ctxAudio.createOscillator();
+        osc.type = "sine";
+        var g = ctxAudio.createGain();
+        g.gain.value = 0;
+        osc.connect(g);
+        g.connect(bp);
+
+        var f0 = baseFreq * (0.9 + Math.random() * 0.3);
+        var f1 = f0 * (1.15 + Math.random() * 0.35);
+        var dur = 0.06 + Math.random() * 0.05;
+
+        osc.frequency.setValueAtTime(f0, t);
+        osc.frequency.exponentialRampToValueAtTime(f1, t + dur * 0.6);
+        osc.frequency.exponentialRampToValueAtTime(f0 * 0.85, t + dur);
+
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.22, t + dur * 0.25);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+        osc.start(t);
+        osc.stop(t + dur + 0.02);
+
+        t += dur + 0.04 + Math.random() * 0.05;
+      }
+    }
+
+    function scheduleBirds() {
+      clearTimeout(birdTimer);
+      if (!enabled) return;
+      var delay = 900 + Math.random() * 2600;
+      birdTimer = setTimeout(function () {
+        chirp();
+        if (Math.random() < 0.4) setTimeout(chirp, 250 + Math.random() * 400);
+        scheduleBirds();
+      }, delay);
+    }
+
+    // A soft, woody tick for each countdown second — pitch rises as it nears zero.
+    function tick(secondsLeft, totalSeconds) {
+      ensureContext();
+      if (!ctxAudio) return;
+      if (ctxAudio.state === "suspended") ctxAudio.resume();
+
+      var now = ctxAudio.currentTime;
+      var progress = 1 - secondsLeft / totalSeconds; // 0 -> 1 as it counts down
+      var freq = 520 + progress * 420;
+
+      var osc = ctxAudio.createOscillator();
+      osc.type = "triangle";
+      var g = ctxAudio.createGain();
+      g.gain.value = 0.0001;
+
+      var bp = ctxAudio.createBiquadFilter();
+      bp.type = "bandpass";
+      bp.frequency.value = freq * 2;
+      bp.Q.value = 4;
+
+      osc.frequency.setValueAtTime(freq, now);
+      osc.connect(bp);
+      bp.connect(g);
+      g.connect(master);
+
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.5, now + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+
+      osc.start(now);
+      osc.stop(now + 0.2);
+    }
+
+    // A brighter chime when the countdown reaches zero.
+    function chime() {
+      ensureContext();
+      if (!ctxAudio) return;
+      if (ctxAudio.state === "suspended") ctxAudio.resume();
+      var now = ctxAudio.currentTime;
+      [880, 1108.7, 1318.5].forEach(function (freq, i) {
+        var osc = ctxAudio.createOscillator();
+        osc.type = "sine";
+        var g = ctxAudio.createGain();
+        g.gain.value = 0.0001;
+        osc.frequency.value = freq;
+        osc.connect(g);
+        g.connect(master);
+        var t = now + i * 0.09;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.35, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+        osc.start(t);
+        osc.stop(t + 0.75);
+      });
+    }
+
+    function start() {
+      ensureContext();
+      if (!ctxAudio) return;
+      if (ctxAudio.state === "suspended") ctxAudio.resume();
+      if (!running) { startWind(); running = true; }
+      enabled = true;
+      master.gain.cancelScheduledValues(ctxAudio.currentTime);
+      master.gain.setTargetAtTime(0.7, ctxAudio.currentTime, 0.8);
+      scheduleBirds();
+    }
+
+    function stop() {
+      enabled = false;
+      clearTimeout(birdTimer);
+      if (ctxAudio && master) {
+        master.gain.cancelScheduledValues(ctxAudio.currentTime);
+        master.gain.setTargetAtTime(0, ctxAudio.currentTime, 0.4);
+      }
+    }
+
+    function toggle() { if (enabled) stop(); else start(); return enabled; }
+
+    return {
+      start: start,
+      stop: stop,
+      toggle: toggle,
+      tick: tick,
+      chime: chime,
+      isEnabled: function () { return enabled; },
+    };
+  })();
+
+  var btnSound = document.getElementById("btn-sound");
+  function refreshSoundBtn() {
+    btnSound.setAttribute("aria-pressed", Sound.isEnabled() ? "true" : "false");
+    btnSound.innerHTML = Sound.isEnabled() ? "&#128266;" : "&#128263;";
+  }
+  btnSound.addEventListener("click", function () {
+    Sound.toggle();
+    refreshSoundBtn();
+  });
+
+  /* ================= Click-to-start countdown ================= */
   var gate = document.getElementById("gate");
   var startBtn = document.getElementById("start-btn");
   var ringWrap = document.getElementById("ring-wrap");
@@ -214,6 +478,7 @@
     void countEl.offsetWidth;
     countEl.classList.add("pulse");
     updateRing();
+    Sound.tick(remaining, TOTAL);
     if (remaining <= 0) {
       finish();
       return;
@@ -225,19 +490,23 @@
   function finish() {
     finished = true;
     clearTimeout(timerId);
-    statusEl.textContent = "Opening Forest Admin now…";
+    Sound.chime();
+    statusEl.textContent = "Redirecting…";
     setTimeout(function () {
       window.location.href = DEST;
-    }, 350);
+    }, 500);
   }
 
   function startCountdown() {
     if (started) return;
     started = true;
+
+    // A click is a user gesture — start the nature soundtrack together with the countdown.
+    Sound.start();
+    refreshSoundBtn();
+
     gate.hidden = true;
     ringWrap.hidden = false;
-    statusEl.hidden = false;
-    statusEl.textContent = "Redirecting to Forest Admin…";
     updateRing();
     countEl.textContent = String(remaining);
     timerId = setTimeout(tick, 1000);
